@@ -1,0 +1,148 @@
+
+References :
+
+How to transfer files via bluetooth on Linux
+https://www.garron.me/en/go2linux/how-transfer-files-bluetooth-linux.html
+
+
+bluetooth how to, hcitool, obexftp, rfcomm
+https://www.linuxquestions.org/questions/blog/ted_chou12-538462/bluetooth-how-to-hcitool-obexftp-rfcomm-35370/
+
+https://www.pcsuggest.com/linux-bluetooth-setup-hcitool-bluez/
+
+
+------------transfer image from one raspbery pi to another------------------
+
+my pi : B8:27:EB:7D:E2:B9
+basant sir  pi : B8:27:EB:B9:D6:80
+laptop: 5c:ea:1d:60:77:82
+
+RaspberryPi :192.168.0.63
+B8:27:EB:7D:E2:B9
+
+RaspberryPi :192.168.0.53
+B8:27:EB:99:74:92
+
+
+
+
+step 1: make RPi decoverable pair up to raspberry pair
+-use bluetoothctl tool to connect to raspberry pi via bluetooth
+
+
+
+----------------Bluetoothctl commands-----------------------------------------
+power on
+bluetoothctl
+power on
+
+# Make sure an agent is running for the Bluetooth device.
+agent on
+
+# Start a scan for other Bluetooth devices in the area.
+scan on
+
+# Wait for the required Bluetooth device to be reported...
+
+# Stop scanning when the required Bluetooth device is found.
+scan off
+
+# Attempt to pair the required Bluetooth device.
+pair <dev>
+
+e.g. <dev>=00:1D:A5:F7:FF:0D
+
+# Pairing normally prompts for a password. Standard Bluetooth pairing passwords
+# are: 0000 or 1234, try these if you are unsure of the password.
+
+# If pairing fails or propt for password does not appear, try the following, and
+# then try paring again.
+agent off
+power off
+power on
+agent on
+
+# Once paired it should appear in the list of paired devices.
+paired-devices
+
+# You can now leave the Bluetooth utility and the device should be paired and
+# ready for use.
+quit
+
+
+
+--------------------1) hcitool commands---------------------------------------------------
+hcitool scan
+
+//to get information about blutooth controller
+hciconfig -a 
+
+//to change name of bluetooth controller at raspberry pi
+sudo hciconfig hci0 name <name-to-give>
+
+
+---------------------2) sdptool-------------------------------------------------
+
+#1st putty session which is running Bluetoothctl.
+
+#Open the second RPi putty session.
+sudo sdptool browse XXXXXXXXXXX
+
+# check channel number of obexftp service
+
+
+----------------------3) rfcomm server-----------------------------
+
+rfcomm0 {
+	# Automatically bind the device at startup
+ 	bind yes;
+
+	# Bluetooth address of the device
+	device 50:56:63:A6:5E:06;
+
+	# RFCOMM channel for the connection
+	channel	16;
+
+ 	# Description of the connection
+	comment "OBEX File Transfer";
+}
+
+
+#Ok, now that SPP is running on both boards, we can begin setting up our connection.
+
+#Step 5: Create server and client.
+
+#You can quickly test whether the boards accept a connection by running
+
+sudo rfcomm watch hci0
+
+on one board and then after that (do this on the other board)
+
+sudo rfcomm connect hci0 <bdaddr>
+where <bdaddr> is the address of the board 'watching'. If all goes well, on the server (1st) board you should see
+
+Waiting for connection on channel 1
+Connection from B8:27:EB:25:95:F5 to /dev/rfcomm0
+Press CTRL-C for hangup
+And on the client board you should see
+
+Connected to /dev/rfcomm0 to B8:27:EB:7B:F3:62 on channel 1
+Press CTRL-C for hangup
+
+
+
+
+
+#---------------------------------4) OBEX ftp-------------------------------
+----on (2nd )putty terminal
+sudo obexftp -b XXXXXXXX (laptop address) -c / -l
+
+
+sudo obexftp -b AC:B5:7D:E2:52:CD -c / -g IMG_20170731_111503.jpg
+
+#to veryfy
+ls-l
+
+
+#To upload, use the following syntax
+obexftp -b AC:B5:7D:E2:52:CD -c / -p file.jpg
